@@ -6,13 +6,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Mailer\SimpleMailer;
 
-
-
-
-
-class DefaultController extends AbstractController
-{
-
+class DefaultController extends AbstractController {
     private SimpleMailer $mailer;
 
     public function index(string $name): Response{
