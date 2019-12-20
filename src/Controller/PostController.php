@@ -3,17 +3,26 @@
 namespace App\Controller;
 
 use App\Entity\Post;
+use App\Exception\ValidationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class PostController {
     private EntityManagerInterface $entityManager;
+    private SerializerInterface $serializer;
+    private ValidatorInterface $validator;
 
-    public function __construct(EntityManagerInterface $entityManager){
-        $this->entityManager = $entityManager;        
+
+    public function __construct(EntityManagerInterface $entityManager, SerializerInterface $serializer, 
+    ValidatorInterface  $validator){
+        $this->entityManager = $entityManager;  
+        $this->serializer = $serializer; 
+        $this->validator = $validator;
     }
 
     //Anoatação do método create - só permite acessar o metódo pelo metódo POST
@@ -36,10 +45,19 @@ final class PostController {
      //Recebe os dados da requisição
      //Request - camada de abstração do symfony
      public function create(Request $request): Response {
-         //json_decode - transforma a string em um array associativo
+        /* //json_decode - transforma a string em um array associativo
         $data = json_decode($request->getContent(), true);
-
         $post = new Post($data['title'], $data['description']);         
+        */
+
+        $post = $this->serializer->deserialize($request->getContent(), Post::class, 'json');
+
+        $errors = $this->validator->validate($post);
+
+        if (count($errors)){
+            throw new ValidationException($errors);
+        }
+
         //persistência do post - 
         $this->entityManager->persist($post);
         //gera os inserts 
@@ -53,14 +71,23 @@ final class PostController {
      */
     public function details(int $id): Response {
         /** @var Post $post */
+
+        
+        
         $post = $this->entityManager->getRepository(Post::class)->find($id);
 
-        return JsonResponse::create([
+        /*return JsonResponse::create([
             'id' => $post->getId(),
             'title' => $post->title,
             'decription' => $post->description,
             'createdAt' => $post->getCreatedAt()->format('Y-m-d')
-        ]);
+        ]);*/
+
+        if(null === $post) {
+            throw new NotFoundHttpException('Post não encontrado');
+        }
+
+        return JsonResponse::fromJsonString($this->serializer->serialize($post, 'json'));
     }
 
     /**
