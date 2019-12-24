@@ -70,9 +70,7 @@ final class PostController {
      * @Route("/posts/{id}", methods={"GET"})
      */
     public function details(int $id): Response {
-        /** @var Post $post */
-
-        
+        /** @var Post $post */        
         
         $post = $this->entityManager->getRepository(Post::class)->find($id);
 
@@ -84,7 +82,8 @@ final class PostController {
         ]);*/
 
         if(null === $post) {
-            throw new NotFoundHttpException('Post não encontrado');
+           // throw new NotFoundHttpException('Post não encontrado');
+           return new Response ("Not found", Response::HTTP_NOT_FOUND);
         }
 
         return JsonResponse::fromJsonString($this->serializer->serialize($post, 'json'));

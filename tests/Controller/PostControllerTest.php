@@ -60,4 +60,55 @@ final class PostControllerTest extends WebTestCase {
 
         $this->assertEquals(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
     }
+
+    public function test_get_post_not_exist(): void {
+        $this->client->request('GET', '/posts/11');
+        $this->assertEquals(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function test_create_post_invalid_description(): void {
+        $this->client->request('POST', '/posts', [], [], [], json_encode([
+            'title' => 'Title',
+            'description' => null
+        ]));        
+    
+        $this->assertEquals(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function test_update_post(): void {
+        $post = new Post("Minha primeira aplicação com Symfony", "Descrição da minha aplicação");        
+        $this->em->persist($post);
+        $this->em->flush(); 
+
+        $this->client->request('PUT', '/posts/1', [], [], [], json_encode([
+            'title' => 'Atualizando post',
+            'description' => 'Alguma Descrição'
+        ]));        
+
+        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    }
+    
+    public function test_get_post_exist(): void {
+        $post = new Post("Minha primeira aplicação com Symfony", "Descrição da minha aplicação");        
+        $this->em->persist($post);
+        $this->em->flush(); 
+
+        $this->client->request('GET', '/posts/1');
+        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function test_get_all_post(): void {
+        $post = new Post("Minha primeira aplicação com Symfony", "Descrição da minha aplicação");        
+        $this->em->persist($post);
+        $this->em->flush(); 
+
+        $this->client->request('GET', '/posts');
+        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function test_get_all_post_not_exist(): void {
+        $this->client->request('GET', '/posts');
+        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    }    
 }
+
